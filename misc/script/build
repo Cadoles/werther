@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+DISTS=${DISTS:-linux/386 linux/amd64 windows/amd64 darwin/amd64}
+
+for dist in $DISTS
+do
+    os=`echo $dist | cut -d'/' -f1`
+    arch=`echo $dist | cut -d'/' -f2`
+    
+    env GOOS=$os GOARCH=$arch go build -o bin/werther_${os}_${arch} -ldflags "-w -s -X main.version=$(git describe --tags)" ./cmd/werther
+    
+    if [[ "$os" = "windows" ]]; then
+        zip -r bin/werther_${os}_${arch}.zip bin/werther_${os}_${arch}
+    else
+        tar cvzf bin/werther_${os}_${arch}.tar.gz bin/werther_${os}_${arch}
+    fi
+done
+
+(cd bin && sha256sum *.{tar.gz,zip} > werther_checksums.txt)
