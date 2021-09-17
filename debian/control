@@ -1,0 +1,14 @@
+Source: hydra-werther
+Section: unknown
+Priority: optional
+Maintainer: Cadoles <contact@cadoles.com>
+Build-Depends: debhelper (>= 8.0.0), wget, ca-certificates, tar
+Standards-Version: 3.9.4
+Homepage: http://forge.cadoles.com/Cadoles/hydra-werther
+Vcs-Git: http://forge.cadoles.com/Cadoles/hydra-werther.git
+Vcs-Browser: http://forge.cadoles.com/Cadoles/hydra-werther
+
+Package: hydra-werther
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends}, ssl-cert
+Description: Hydra identity provider backed by LDAP compatible server

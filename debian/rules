@@ -1,0 +1,40 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+GO_VERSION := 1.17.1
+OS := linux
+ARCH := amd64
+GOPATH=$(HOME)/go
+
+ifeq (, $(shell which go 2>/dev/null))
+override_dh_auto_build: install-go
+endif
+
+%:
+	dh $@ --with systemd
+
+install-go:
+	wget https://dl.google.com/go/go$(GO_VERSION).$(OS)-$(ARCH).tar.gz
+	tar -C /usr/local -xzf go$(GO_VERSION).$(OS)-$(ARCH).tar.gz
+
+override_dh_auto_build: $(GOPATH)
+	GOPATH=$(GOPATH) PATH="$(PATH):/usr/local/go/bin:$(GOPATH)/bin" DISTS=$(OS)/$(ARCH) make
+
+$(GOPATH):
+	mkdir -p $(GOPATH)
+
+override_dh_auto_install:
+	mkdir -p debian/hydra-werther/usr/bin
+	mkdir -p debian/hydra-werther/etc/hydra-werther
+
+	cp bin/werther_$(OS)_$(ARCH) debian/hydra-werther/usr/bin/hydra-werther
+	cp conf/hydra-werther.conf debian/hydra-werther/etc/hydra-werther
+
+	install -d debian/hydra-werther
+
+override_dh_strip:
+
+override_dh_auto_test:

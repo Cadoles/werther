@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Hydra Werther login/consent/logout app
+After=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/hydra-werther/hydra-werther.conf
+ExecStart=/usr/bin/hydra-werther
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
