@@ -18,4 +18,4 @@ do
     fi
 done
 
-(cd bin && sha256sum *.{tar.gz,zip} > werther_checksums.txt)
+(cd bin && sha256sum *.{tar.gz,zip} > werther_checksums.txt || exit 0)
