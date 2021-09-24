@@ -193,7 +193,7 @@ func (cli *Client) FindOIDCClaims(ctx context.Context, username string) (map[str
 		return nil, err
 	}
 
-	roles := make(map[string]interface{})
+	roles := make([]map[string]interface{}, 0)
 	for _, entry := range entries {
 		roleDN, ok := entry["dn"].(string)
 		if !ok || roleDN == "" {
@@ -211,21 +211,8 @@ func (cli *Client) FindOIDCClaims(ctx context.Context, username string) (map[str
 		if n < k || !strings.EqualFold(roleDN[n-k:], cli.RoleBaseDN) {
 			panic("You should never see that")
 		}
-		// The DN without the role's base DN must contain a CN and OU
-		// where the CN is for uniqueness only, and the OU is an application id.
-		path := strings.Split(roleDN[:n-k-1], ",")
-		if len(path) != 2 {
-			log.Infow("A role's DN without the role's base DN must contain two nodes only",
-				"roleBaseDN", cli.RoleBaseDN, "roleDN", roleDN)
-			continue
-		}
-		appID := path[1][len("OU="):]
 
-		var appRoles []interface{}
-		if v := roles[appID]; v != nil {
-			appRoles = v.([]interface{})
-		}
-		roles[appID] = append(appRoles, entry[cli.RoleAttr])
+		roles = append(roles, entry)
 	}
 	claims[cli.RoleClaim] = roles
 
