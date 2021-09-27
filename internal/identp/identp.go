@@ -171,7 +171,7 @@ func newLoginEndHandler(ra oa2LoginReqAcceptor, auther authenticator, tmplRender
 		data := LoginTmplData{
 			CSRFToken: nosurf.Token(r),
 			Challenge: challenge,
-			LoginURL:  r.URL.String(),
+			LoginURL:  strings.TrimPrefix(r.URL.String(), "/"),
 		}
 
 		username, password := r.Form.Get("username"), r.Form.Get("password")
