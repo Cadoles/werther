@@ -1,0 +1,21 @@
+name: "hydra-werther"
+arch: "amd64"
+platform: "linux"
+version: "${PACKAGE_VERSION}"
+section: "default"
+priority: "extra"
+maintainer: "Cadoles <contact@cadoles.com>"
+description: |
+  PostgreSQL automated backup scripts
+vendor: "Cadoles"
+homepage: "https://forge.cadoles.com/Cadoles/postgres-backup"
+license: "AGPL-3.0"
+contents:
+  - src: bin/werther_linux_amd64
+    dst: /usr/bin/hydra-werther
+  - src: conf/hydra-werther.conf
+    dst: /etc/hydra-werther
+  - src: misc/packaging/systemd/hydra-werther.service
+    dst: /usr/lib/systemd/system/hydra-werther.service
+
+    
