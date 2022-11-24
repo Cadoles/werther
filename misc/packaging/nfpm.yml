@@ -14,7 +14,7 @@ contents:
   - src: bin/werther_linux_amd64
     dst: /usr/bin/hydra-werther
   - src: conf/hydra-werther.conf
-    dst: /etc/hydra-werther
+    dst: /etc/hydra-werther/hydra-werther.conf
   - src: misc/packaging/systemd/hydra-werther.service
     dst: /usr/lib/systemd/system/hydra-werther.service
 
