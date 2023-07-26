@@ -14,6 +14,8 @@ import (
 	"net/url"
 	"os"
 
+	"crypto/tls"
+
 	"github.com/i-core/rlog"
 	"github.com/i-core/routegroup"
 	"github.com/i-core/werther/internal/identp"
@@ -30,11 +32,12 @@ var version = ""
 
 // Config is a server's configuration.
 type Config struct {
-	DevMode bool   `envconfig:"dev_mode" default:"false" desc:"a development mode"`
-	Listen  string `default:":8080" desc:"a host and port to listen on (<host>:<port>)"`
-	Identp  identp.Config
-	LDAP    ldapclient.Config
-	Web     web.Config
+	DevMode            bool   `envconfig:"dev_mode" default:"false" desc:"Enable development mode"`
+	Listen             string `default:":8080" desc:"a host and port to listen on (<host>:<port>)"`
+	InsecureSkipVerify bool   `envconfig:"insecure_skip_verify" default:"false" desc:"Disable TLS verification on Hydra connection"`
+	Identp             identp.Config
+	LDAP               ldapclient.Config
+	Web                web.Config
 }
 
 func main() {
@@ -78,6 +81,11 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to start the server: %s\n", err)
 		os.Exit(1)
+	}
+
+	if cnf.InsecureSkipVerify {
+		log.Warn("All ssl verifications are disabled !")
+		http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 
 	ldap := ldapclient.New(cnf.LDAP)

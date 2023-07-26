@@ -26,6 +26,8 @@ var (
 	ErrChallengeNotFound = errors.New("challenge not found")
 	// ErrChallengeExpired is an error that happens when a challenge is already used.
 	ErrChallengeExpired = errors.New("challenge expired")
+	//ErrServiceUnavailable is an error that happens when the hydra admin service is unavailable
+	ErrServiceUnavailable = errors.New("hydra service unavailable")
 )
 
 type reqType string
@@ -52,6 +54,7 @@ func initiateRequest(typ reqType, hydraURL string, fakeTLSTermination bool, chal
 	if err != nil {
 		return nil, err
 	}
+
 	u, err := parseURL(hydraURL)
 	if err != nil {
 		return nil, err
@@ -145,6 +148,8 @@ func checkResponse(resp *http.Response) error {
 		return ErrChallengeNotFound
 	case 409:
 		return ErrChallengeExpired
+	case 503:
+		return ErrServiceUnavailable
 	default:
 		var rs struct {
 			Message string `json:"error"`
