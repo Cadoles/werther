@@ -9,6 +9,15 @@ MKT_GITEA_RELEASE_ORG ?= Cadoles
 MKT_GITEA_RELEASE_PROJECT ?= hydra-werther
 MKT_GITEA_RELEASE_VERSION ?= $(MKT_PROJECT_VERSION)
 
+define MKT_GITEA_RELEASE_BODY
+## Docker usage
+
+```
+docker pull $(IMAGE_NAME):$(MKT_PROJECT_VERSION)
+```
+endef
+export MKT_GITEA_RELEASE_BODY
+
 build: build-bin build-image
 
 build-bin: clean generate
