@@ -48,19 +48,20 @@ type connector interface {
 
 // Config is a LDAP configuration.
 type Config struct {
-	Endpoints       []string          `envconfig:"endpoints" required:"true" desc:"a LDAP's server URLs as \"<address>:<port>\""`
-	BindDN          string            `envconfig:"binddn" desc:"a LDAP bind DN"`
-	BindPass        string            `envconfig:"bindpw" json:"-" desc:"a LDAP bind password"`
-	BaseDN          string            `envconfig:"basedn" required:"true" desc:"a LDAP base DN for searching users"`
-	UserSearchQuery string            `envconfig:"user_search_query" desc:"the user search query" default:"(&(|(objectClass=organizationalPerson)(objectClass=inetOrgPerson))(|(uid=%[1]s)(mail=%[1]s)(userPrincipalName=%[1]s)(sAMAccountName=%[1]s)))"`
-	AttrClaims      map[string]string `envconfig:"attr_claims" default:"name:name,sn:family_name,givenName:given_name,mail:email" desc:"a mapping of LDAP attributes to OpenID connect claims"`
-	RoleBaseDN      string            `envconfig:"role_basedn" required:"true" desc:"a LDAP base DN for searching roles"`
-	RoleSearchQuery string            `envconfig:"role_search_query" desc:"the role search query" default:"(|(&(|(objectClass=group)(objectClass=groupOfNames))(member=%[1]s))(&(objectClass=groupOfUniqueNames)(uniqueMember=%[1]s)))"`
-	RoleAttr        string            `envconfig:"role_attr" default:"description" desc:"a LDAP group's attribute that contains a role's name"`
-	RoleClaim       string            `envconfig:"role_claim" default:"https://github.com/i-core/werther/claims/roles" desc:"a name of an OpenID Connect claim that contains user roles"`
-	CacheSize       int               `envconfig:"cache_size" default:"512" desc:"a user info cache's size in KiB"`
-	CacheTTL        time.Duration     `envconfig:"cache_ttl" default:"30m" desc:"a user info cache TTL"`
-	IsTLS           bool              `envconfig:"is_tls" default:"false" desc:"should LDAP connection be established via TLS"`
+	Endpoints         []string          `envconfig:"endpoints" required:"true" desc:"a LDAP's server URLs as \"<address>:<port>\""`
+	BindDN            string            `envconfig:"binddn" desc:"a LDAP bind DN"`
+	BindPass          string            `envconfig:"bindpw" json:"-" desc:"a LDAP bind password"`
+	BaseDN            string            `envconfig:"basedn" required:"true" desc:"a LDAP base DN for searching users"`
+	UserSearchQuery   string            `envconfig:"user_search_query" desc:"the user search query" default:"(&(|(objectClass=organizationalPerson)(objectClass=inetOrgPerson))(|(uid=%[1]s)(mail=%[1]s)(userPrincipalName=%[1]s)(sAMAccountName=%[1]s)))"`
+	AttrClaims        map[string]string `envconfig:"attr_claims" default:"name:name,sn:family_name,givenName:given_name,mail:email" desc:"a mapping of LDAP attributes to OpenID connect claims"`
+	RoleBaseDN        string            `envconfig:"role_basedn" required:"true" desc:"a LDAP base DN for searching roles"`
+	RoleSearchQuery   string            `envconfig:"role_search_query" desc:"the role search query" default:"(|(&(|(objectClass=group)(objectClass=groupOfNames))(member=%[1]s))(&(objectClass=groupOfUniqueNames)(uniqueMember=%[1]s)))"`
+	RoleAttr          string            `envconfig:"role_attr" default:"description" desc:"a LDAP group's attribute that contains a role's name"`
+	RoleClaim         string            `envconfig:"role_claim" default:"https://github.com/i-core/werther/claims/roles" desc:"a name of an OpenID Connect claim that contains user roles"`
+	CacheSize         int               `envconfig:"cache_size" default:"512" desc:"a user info cache's size in KiB"`
+	CacheTTL          time.Duration     `envconfig:"cache_ttl" default:"30m" desc:"a user info cache TTL"`
+	IsTLS             bool              `envconfig:"is_tls" default:"false" desc:"should LDAP connection be established via TLS"`
+	ConnectionTimeout time.Duration     `envconfig:"connection_timeout" default:"60s" desc:"LDAP server connection timeout"`
 }
 
 // Client is a LDAP client (compatible with Active Directory).
@@ -75,11 +76,12 @@ func New(cnf Config) *Client {
 	return &Client{
 		Config: cnf,
 		connector: &ldapConnector{
-			BaseDN:          cnf.BaseDN,
-			UserSearchQuery: cnf.UserSearchQuery,
-			RoleBaseDN:      cnf.RoleBaseDN,
-			IsTLS:           cnf.IsTLS,
-			RoleSearchQuery: cnf.RoleSearchQuery,
+			BaseDN:            cnf.BaseDN,
+			UserSearchQuery:   cnf.UserSearchQuery,
+			RoleBaseDN:        cnf.RoleBaseDN,
+			IsTLS:             cnf.IsTLS,
+			RoleSearchQuery:   cnf.RoleSearchQuery,
+			ConnectionTimeout: cnf.ConnectionTimeout,
 		},
 		cache: freecache.NewCache(cnf.CacheSize * 1024),
 	}
@@ -291,15 +293,16 @@ func (cli *Client) findBasicUserDetails(cn conn, username string, attrs []string
 }
 
 type ldapConnector struct {
-	BaseDN          string
-	RoleBaseDN      string
-	IsTLS           bool
-	UserSearchQuery string
-	RoleSearchQuery string
+	BaseDN            string
+	RoleBaseDN        string
+	IsTLS             bool
+	UserSearchQuery   string
+	RoleSearchQuery   string
+	ConnectionTimeout time.Duration
 }
 
 func (c *ldapConnector) Connect(ctx context.Context, addr string) (conn, error) {
-	d := net.Dialer{Timeout: ldap.DefaultTimeout}
+	d := net.Dialer{Timeout: c.ConnectionTimeout}
 	tcpcn, err := d.DialContext(ctx, "tcp", addr)
 	if err != nil {
 		return nil, err
