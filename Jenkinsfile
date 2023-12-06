@@ -1,5 +1,31 @@
 @Library('cadoles') _
 
+// Utilisation du pipeline "standard"
+// Voir https://forge.cadoles.com/Cadoles/Jenkins/src/branch/master/doc/tutorials/standard-make-pipeline.md
+standardMakePipeline([
+    'dockerfileExtension': '''
+    ''',
+    'hooks': [
+        // Scan images for vulnerabilities before tests
+        'pre-test': {
+            sh '''
+            make scan
+            '''
+        },
+        'pre-release': {
+            // Login into docker registry
+            sh '''
+            make .mktools
+            echo "$DOCKER_REGISTRY_PASSWORD" | docker login --username "$DOCKER_REGISTRY_USERNAME" --password-stdin reg.cadoles.com
+            '''
+        }
+    ],
+    // Use credentials to push images to registry
+    'credentials': [
+        usernamePassword(credentialsId: 'kipp-credentials', usernameVariable: 'DOCKER_REGISTRY_USERNAME', passwordVariable: 'DOCKER_REGISTRY_PASSWORD')
+    ]
+])
+
 pipeline {
   agent {
     dockerfile {

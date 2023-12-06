@@ -10,6 +10,7 @@ description: |
 vendor: "Cadoles"
 homepage: "https://forge.cadoles.com/Cadoles/postgres-backup"
 license: "AGPL-3.0"
+version_schema: none
 contents:
   - src: bin/werther_linux_amd64
     dst: /usr/bin/hydra-werther
