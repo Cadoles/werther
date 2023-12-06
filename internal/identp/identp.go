@@ -11,6 +11,7 @@ package identp
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -127,7 +128,8 @@ func newLoginStartHandler(rproc oa2LoginReqProcessor, tmplRenderer TemplateRende
 				return
 			}
 			log.Infow("Failed to initiate an OAuth2 login request", zap.Error(err), "challenge", challenge)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			errMsg := fmt.Sprintf("%s - %s - %s", http.StatusText(http.StatusInternalServerError), err, errors.Cause(err))
+			http.Error(w, errMsg, http.StatusInternalServerError)
 			return
 		}
 		log.Infow("A login request is initiated", "challenge", challenge, "username", ri.Subject)
