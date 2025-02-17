@@ -16,11 +16,13 @@ type LoginReqDoer struct {
 	hydraURL           string
 	fakeTLSTermination bool
 	rememberFor        int
+	acr                string
+	amr                []string
 }
 
 // NewLoginReqDoer creates a LoginRequest.
-func NewLoginReqDoer(hydraURL string, fakeTLSTermination bool, rememberFor int) *LoginReqDoer {
-	return &LoginReqDoer{hydraURL: hydraURL, fakeTLSTermination: fakeTLSTermination, rememberFor: rememberFor}
+func NewLoginReqDoer(hydraURL string, fakeTLSTermination bool, rememberFor int, acr string, amr []string) *LoginReqDoer {
+	return &LoginReqDoer{hydraURL: hydraURL, fakeTLSTermination: fakeTLSTermination, rememberFor: rememberFor, acr: acr, amr: amr}
 }
 
 // InitiateRequest fetches information on the OAuth2 request.
@@ -32,13 +34,17 @@ func (lrd *LoginReqDoer) InitiateRequest(challenge string) (*ReqInfo, error) {
 // AcceptLoginRequest accepts the requested authentication process, and returns redirect URI.
 func (lrd *LoginReqDoer) AcceptLoginRequest(challenge string, remember bool, subject string) (string, error) {
 	data := struct {
-		Remember    bool   `json:"remember"`
-		RememberFor int    `json:"remember_for"`
-		Subject     string `json:"subject"`
+		Remember    bool     `json:"remember"`
+		RememberFor int      `json:"remember_for"`
+		Subject     string   `json:"subject"`
+		ACR         string   `json:"acr,omitempty"`
+		AMR         []string `json:"amr,omitempty"`
 	}{
 		Remember:    remember,
 		RememberFor: lrd.rememberFor,
 		Subject:     subject,
+		ACR:         lrd.acr,
+		AMR:         lrd.amr,
 	}
 	redirectURI, err := acceptRequest(login, lrd.hydraURL, lrd.fakeTLSTermination, challenge, data)
 	return redirectURI, errors.Wrap(err, "failed to accept login request")

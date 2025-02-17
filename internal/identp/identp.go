@@ -32,6 +32,8 @@ type Config struct {
 	SessionTTL         time.Duration     `envconfig:"session_ttl" default:"24h" desc:"a user session's TTL"`
 	ClaimScopes        map[string]string `envconfig:"claim_scopes" default:"name:profile,family_name:profile,given_name:profile,email:email,https%3A%2F%2Fgithub.com%2Fi-core%2Fwerther%2Fclaims%2Froles:roles" desc:"a mapping of OpenID Connect claims to scopes (all claims are URL encoded)"`
 	FakeTLSTermination bool              `envconfig:"fake_tls_termination" default:"false" desc:"Fake tls termination by adding \"X-Forwarded-Proto: https\" to http headers "`
+	ACR                string            `envconfig:"acr" desc:"Authorization Context Class Reference"`
+	AMR                []string          `envconfig:"amr" desc:"Authentication Method References"`
 }
 
 // UserManager is an interface that is used for authentication and providing user's claims.
@@ -85,8 +87,8 @@ func NewHandler(cnf Config, um UserManager, tr TemplateRenderer) *Handler {
 // AddRoutes registers all required routes for Login & Consent Provider.
 func (h *Handler) AddRoutes(apply func(m, p string, h http.Handler, mws ...func(http.Handler) http.Handler)) {
 	sessionTTL := int(h.SessionTTL.Seconds())
-	apply(http.MethodGet, "/login", newLoginStartHandler(hydra.NewLoginReqDoer(h.HydraURL, h.FakeTLSTermination, 0), h.tr))
-	apply(http.MethodPost, "/login", newLoginEndHandler(hydra.NewLoginReqDoer(h.HydraURL, h.FakeTLSTermination, sessionTTL), h.um, h.tr))
+	apply(http.MethodGet, "/login", newLoginStartHandler(hydra.NewLoginReqDoer(h.HydraURL, h.FakeTLSTermination, 0, h.ACR, h.AMR), h.tr))
+	apply(http.MethodPost, "/login", newLoginEndHandler(hydra.NewLoginReqDoer(h.HydraURL, h.FakeTLSTermination, sessionTTL, h.ACR, h.AMR), h.um, h.tr))
 	apply(http.MethodGet, "/consent", newConsentHandler(hydra.NewConsentReqDoer(h.HydraURL, h.FakeTLSTermination, sessionTTL), h.um, h.ClaimScopes))
 	apply(http.MethodGet, "/logout", newLogoutHandler(hydra.NewLogoutReqDoer(h.HydraURL, h.FakeTLSTermination)))
 }
